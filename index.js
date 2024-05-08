@@ -94,7 +94,6 @@ const client = new MongoClient(uri, {
         res.send(result);
       });
 
-
       //Save a bid data in db
       app.post('/bid', async(req, res) =>{
         const bidData = req.body;
@@ -102,7 +101,21 @@ const client = new MongoClient(uri, {
         res.send(result);
       })
 
+      //get all bids for a user by email from db
+      app.get('/my-bids/:email', async(req, res) =>{
+        const email = req.params.email;
+        const query = {email};
+        const result = await bidsCollection.find(query).toArray();
+        res.send(result)
+      });
 
+      //Get all bid requests from db for job owner
+      app.get('/bid-requests/:email', async(req, res) => {
+        const email = res.params.email;
+        const query = {'buyer.email': email}
+        const result = await bidsCollection.find(query).toArray();
+        res.send(result);
+      })
 
 
 
