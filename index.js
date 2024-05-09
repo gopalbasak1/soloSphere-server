@@ -39,6 +39,9 @@ const client = new MongoClient(uri, {
       const jobsCollection = client.db('SoloSphere').collection('jobs');
       const bidsCollection = client.db('SoloSphere').collection('bids');
 
+
+      //jwt generate
+
     
       //Get all jobs data from db
 
@@ -111,11 +114,23 @@ const client = new MongoClient(uri, {
 
       //Get all bid requests from db for job owner
       app.get('/bid-requests/:email', async(req, res) => {
-        const email = res.params.email;
+        const email = req.params.email;
         const query = {'buyer.email': email}
         const result = await bidsCollection.find(query).toArray();
         res.send(result);
-      })
+      });
+
+      //Update Bid Status
+      app.patch('/bid/:id', async(req, res) => {
+        const id = req.params.id;
+        const status = req.body;
+        const query = {_id: new ObjectId(id)};
+        const updateDoc={
+          $set:status,
+        }
+        const result = await bidsCollection.updateOne(query, updateDoc)
+        res.send(result);
+      });
 
 
 
