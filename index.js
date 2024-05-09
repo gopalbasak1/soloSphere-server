@@ -18,7 +18,26 @@ const corsOptions = {
 //middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
+//verify jwt middleware
+const verifyToken = (req, res, next) => {
+  const token = req.cookies?.token;
+  if(!token) return res.status(401).send({message: 'unauthorized access'})
+
+  if(token){
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+
+      if(err){
+        console.log(err);
+        return res.status(401).send({message: 'unauthorized access'})
+      }
+      console.log(decoded);
+      req.user = decoded
+      next()
+    })
+  }
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.qhiqbma.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -90,7 +109,9 @@ const client = new MongoClient(uri, {
       })
 
       //Save all jobs posted by a specific user
-      app.get('/jobs/:email', async(req, res)=>{
+      app.get('/jobs/:email', verifyToken, async(req, res)=>{
+        const tokenData = req.user;
+        console.log(tokenData, 'from token');
         const email = req.params.email;
         const query = {'buyer.email': email};
         const result = await jobsCollection.find(query).toArray();
@@ -98,7 +119,7 @@ const client = new MongoClient(uri, {
       })
 
       //delete a job data from db
-      app.delete('/job/:id', async(req, res)=>{
+      app.delete('/job/:id', verifyToken, async(req, res)=>{
         const id = req.params.id;
         const query = {_id: new ObjectId(id)};
         const result = await jobsCollection.deleteOne(query);
